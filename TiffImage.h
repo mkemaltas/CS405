@@ -19,6 +19,15 @@
 #define PHOTOMETRIC_RGB 2
 #define PHOTOMETRIC_PALETTE 3
 #define PHOTOMETRIC_MASK 4
+//Orientation
+#define ORIENTATION_TOPLEFT 1
+#define ORIENTATION_TOPRIGHT 2
+#define ORIENTATION_BOTRIGHT 3
+#define ORIENTATION_BOTLEFT 4
+#define ORIENTATION_LEFTTOP 5
+#define ORIENTATION_RIGHTTOP 6
+#define ORIENTATION_RIGHTBOT 7
+#define ORIENTATION_LEFTBOT 8
 
 class TiffImage
 {
@@ -31,6 +40,8 @@ public:
 	void applyIFD(IFD ifd);
 	bool Endian();
 
+	void printMetaInformation();
+
 
 private:
 	FILE *fp;
@@ -41,11 +52,19 @@ private:
 	short int directory_num;
 
 	//IFD information
-	long subfile_type;
-	short compression;
-	short PM_Interpretation;
+	short  compression;
+	short  PM_Interpretation;
 	short *BitsPerSample;
+	short  orientation;
+	short  SamplesPerPixel;
+
 	long  *StripOffsets;
+	long  *StripByteCounts;
+	long  *XResolution;
+	long  *YResolution;
+	long   subfile_type;	
+	long   RowsPerStrip;
+
 
 	IFD *IFDs; // One-to-many relationship.
 

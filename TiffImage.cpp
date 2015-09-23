@@ -188,12 +188,231 @@ void TiffImage::applyIFD(IFD ifd){
 		StripOffsets = new long[ifd.getCount()];
 		if(ifd.getCount() * ifd.getFieldSize() <= 4){
 			StripOffsets[0] = (long) ifd.getValue();
-
 		}
 		else{
+			long int offset = (long int) ifd.getOffset();
+			fseek(fp, offset, SEEK_SET);
 
-
+			char *temp = new char[ifd.getFieldSize()];
+			for(int i=0;i<ifd.getCount();i++){
+				StripOffsets[i] = 0;
+				if(endian){
+					if(fgets(temp,ifd.getFieldSize(),fp)!=NULL){
+						for(int j=0;j<ifd.getFieldSize();j++){
+							StripOffsets[i] = StripOffsets[i] | ( temp[j] << ( (ifd.getFieldSize() - j -1) *8));
+						}
+					}
+					else{
+						perror("Can not read IFD Strip Offsets");
+						exit(EXIT_FAILURE);
+					}
+				}
+				else{
+					if(fgets(temp,ifd.getFieldSize(),fp)!=NULL){
+						for(int j=0;j<ifd.getFieldSize();j++){
+							StripOffsets[i] = StripOffsets[i] | ( temp[ifd.getFieldSize() - j -1] << ( (ifd.getFieldSize() - j -1) *8));
+						}
+					}
+					else{
+						perror("Can not read IFD Strip Offsets");
+						exit(EXIT_FAILURE);
+					}
+				}
+			}
 		}
 
 	}
+	else if(ifd.getTag() == 274) { // Orientation
+		orientation = (ifd.getValue() & ORIENTATION_BOTLEFT) | (ifd.getValue() & ORIENTATION_BOTRIGHT) | (ifd.getValue() & ORIENTATION_LEFTBOT) |  (ifd.getValue() & ORIENTATION_TOPRIGHT) |
+			(ifd.getValue() & ORIENTATION_LEFTTOP) | (ifd.getValue() & ORIENTATION_RIGHTBOT) | (ifd.getValue() & ORIENTATION_RIGHTTOP) | (ifd.getValue() & ORIENTATION_TOPLEFT);
+	}
+	else if(ifd.getTag() == 277) { // SamplesPerPixel
+		SamplesPerPixel = (short) ifd.getValue();	
+	}
+	else if(ifd.getTag() == 278) { // RowsPerStrip
+		RowsPerStrip = (long) ifd.getValue();
+	}
+	else if(ifd.getTag() == 279) { // StripByteCounts
+		StripByteCounts = new long[ifd.getCount()];
+		if(ifd.getCount() * ifd.getFieldSize() <= 4){
+			StripByteCounts[0] = (long) ifd.getValue();
+		}
+		else{
+
+			long int offset = (long int) ifd.getOffset();
+			fseek(fp, offset, SEEK_SET);
+
+			char *temp = new char[ifd.getFieldSize()];
+			for(int i=0;i<ifd.getCount();i++){
+				StripByteCounts[i] = 0;
+				if(endian){
+					if(fgets(temp,ifd.getFieldSize(),fp)!=NULL){
+						for(int j=0;j<ifd.getFieldSize();j++){
+							StripByteCounts[i] = StripByteCounts[i] | ( temp[j] << ( (ifd.getFieldSize() - j -1) *8));
+						}
+					}
+					else{
+						perror("Can not read IFD Strip Byte Counts");
+						exit(EXIT_FAILURE);
+					}
+				}
+				else{
+					if(fgets(temp,ifd.getFieldSize(),fp)!=NULL){
+						for(int j=0;j<ifd.getFieldSize();j++){
+							StripByteCounts[i] = StripByteCounts[i] | ( temp[ifd.getFieldSize() - j -1] << ( (ifd.getFieldSize() - j -1) *8));
+						}
+					}
+					else{
+						perror("Can not read IFD Strip Byte Counts");
+						exit(EXIT_FAILURE);
+					}
+				}
+			}
+		}
+	}
+	else if(ifd.getTag() == 282){ //XResolution. 1-Ustteki 2-Alttaki
+
+		XResolution = new long[2];
+
+		long int offset = (long int) ifd.getOffset();
+		fseek(fp, offset, SEEK_SET);
+
+		char *temp = new char(sizeof(long));
+		for(int i=0;i<2;i++){
+			XResolution[i] = 0;
+			if(fgets(temp,sizeof(long),fp)!=NULL){
+				if(endian){
+					XResolution[i] = XResolution[i] & (temp[0] << 24);
+					XResolution[i] = XResolution[i] & (temp[1] << 16);
+					XResolution[i] = XResolution[i] & (temp[2] << 8 );
+					XResolution[i] = XResolution[i] & (temp[3] << 0 );
+				}
+
+				else{
+					XResolution[i] = XResolution[i] & (temp[0] << 0 );
+					XResolution[i] = XResolution[i] & (temp[1] << 8 );
+					XResolution[i] = XResolution[i] & (temp[2] << 16);
+					XResolution[i] = XResolution[i] & (temp[3] << 24);
+				}
+			}
+			else{
+				perror("Error reading IFD Xresolution");
+				exit(EXIT_FAILURE);
+			}
+
+		}
+	}
+	else if(ifd.getTag() == 283){ //YResolution. 1-Ustteki 2-Alttaki
+
+		YResolution = new long[2];
+
+		long int offset = (long int) ifd.getOffset();
+		fseek(fp, offset, SEEK_SET);
+
+		char *temp = new char(sizeof(long));
+		for(int i=0;i<2;i++){
+			YResolution[i] = 0;
+			if(fgets(temp,sizeof(long),fp)!=NULL){
+				if(endian){
+					YResolution[i] = YResolution[i] & (temp[0] << 24);
+					YResolution[i] = YResolution[i] & (temp[1] << 16);
+					YResolution[i] = YResolution[i] & (temp[2] << 8 );
+					YResolution[i] = YResolution[i] & (temp[3] << 0 );
+				}
+
+				else{
+					YResolution[i] = YResolution[i] & (temp[0] << 0 );
+					YResolution[i] = YResolution[i] & (temp[1] << 8 );
+					YResolution[i] = YResolution[i] & (temp[2] << 16);
+					YResolution[i] = YResolution[i] & (temp[3] << 24);
+				}
+			}
+			else{
+				perror("Error reading IFD Yresolution");
+				exit(EXIT_FAILURE);
+			}
+
+		}
+	}
+}
+
+void TiffImage::printMetaInformation(){
+
+	printf("----------------------------------\n");
+	if(endian)
+		printf("Byte Order: Big Endian\n");
+	else
+		printf("Byte Order: Little Endian\n");
+	printf("Number of directories:%hd\n",directory_num);
+	printf("Width:%ld\n",width);
+	printf("Height:%ld\n",height);
+
+	if(subfile_type == FILETYPE_PAGE)
+		printf("Subfile Type: Page\n");
+	else if(subfile_type == FILETYPE_MASK)
+		printf("Subfile Type: Mask\n");
+	else if(subfile_type == FILETYPE_REDUCED)
+		printf("Subfile Type: Reduced\n");
+
+
+	if(compression == COMPRESSION_NONE)
+		printf("Compression Method: None\n");
+	else if(compression == COMPRESSION_PACKBITS)	
+		printf("Compression Method: Pack Bits\n");
+	else if(compression == COMPRESSION_CCITTRLE)
+		printf("Compression Method: CCITT RLE\n");
+	else
+		printf("Compression Method: Not specified\n");
+
+	if(PM_Interpretation == PHOTOMETRIC_MINISWHITE)
+		printf("Photometric Interpretation: 0 is white.\n");
+	else if(PM_Interpretation == PHOTOMETRIC_MINISBLACK)
+		printf("Photometric Interpretation: 0 is black.\n");
+	else if(PM_Interpretation == PHOTOMETRIC_RGB )
+		printf("Photometric Interpretation: RGB.\n");
+	else if(PM_Interpretation == PHOTOMETRIC_PALETTE )
+		printf("Photometric Interpretation: Pallette.\n");
+	else if(PM_Interpretation == PHOTOMETRIC_MASK )
+		printf("Photometric Interpretation: Transparency Mask.\n");
+	else
+		printf("Photometric Interpretation: Not specified\n");
+
+	if(orientation == ORIENTATION_BOTLEFT)
+		printf("Orientation: Bot-Left\n");
+	else if(orientation == ORIENTATION_BOTRIGHT)
+		printf("Orientation: Bot-Right\n");
+	else if(orientation == ORIENTATION_LEFTBOT)
+		printf("Orientation: Left-Bot\n");
+	else if(orientation == ORIENTATION_LEFTTOP)
+		printf("Orientation: Left-Top\n");
+	else if(orientation == ORIENTATION_RIGHTBOT )
+		printf("Orientation: Right-Bot\n");
+	else if(orientation == ORIENTATION_RIGHTTOP)
+		printf("Orientation: Right-Top\n");
+	else if(orientation == ORIENTATION_TOPLEFT)
+		printf("Orientation: Top-Left\n");
+	else if(orientation == ORIENTATION_TOPRIGHT)
+		printf("Orientation: Top-Right\n");
+	else
+		printf("Orientation: Not specified\n");
+
+	printf("Bits Per Sample: ");
+	if(PM_Interpretation == PHOTOMETRIC_RGB){
+		for(int i=0;i<3;i++){
+			printf("%hd\t\n",BitsPerSample[i]);
+		}
+	}
+	else
+		printf("%hd\n",BitsPerSample[0]);
+
+	printf("Samples Per Pixel: %hd\n",SamplesPerPixel);
+
+	printf("X Resolution: %ld/%ld\n",XResolution[0],XResolution[1]);
+	printf("Y Resolution: %ld/%ld\n",YResolution[0],YResolution[1]);
+
+	printf("Rows Per Strip: %ld\n",RowsPerStrip);
+
+
+	printf("----------------------------------\n");
+
 }
